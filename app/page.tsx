@@ -1,21 +1,16 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import geoData from "@/data/districts.geojson"
-import type { DistrictCollection } from "@/types"
+// import { DISTRICTS } from "@/data/Districtsdata"
+import { DISTRICTS } from "@/data/districtsData "
 import { useGameState } from "@/hooks/useGameState"
 import { useTimer } from "@/hooks/useTimer"
 import { NepalMap } from "@/components/NepalMap"
 import { HUD } from "@/components/HUD"
 import { EndScreen } from "@/components/EndScreen"
 
-const collection = geoData as DistrictCollection
-
 export default function Page() {
-  const allNames = useMemo(
-    () => collection.features.map((f) => f.properties.name),
-    [],
-  )
+  const allNames = useMemo(() => DISTRICTS.map((d) => d.name), [])
 
   const game = useGameState(allNames)
   const timer = useTimer({
@@ -107,7 +102,7 @@ export default function Page() {
         </div>
 
         <div className="relative mt-6 overflow-hidden rounded-lg border border-border bg-card p-2">
-          <NepalMap geoData={collection} districts={game.districts} />
+          <NepalMap districts={game.districts} />
         </div>
 
         {game.isOver && (
