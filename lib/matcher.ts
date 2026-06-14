@@ -43,14 +43,7 @@ function buildLookup(allNames: string[]): Map<string, string> {
   return lookup
 }
 
-/**
- * Find the canonical district name that matches the given input.
- *
- * Resolution order:
- * 1. Exact match against canonical names + aliases (normalized).
- *
- * Returns the canonical district name, or null if there is no confident match.
- */
+
 export function findMatch(input: string, allNames: string[]): string | null {
   const normalized = normalize(input)
   if (!normalized) return null
