@@ -3,8 +3,17 @@
 import { useEffect, useMemo, useRef } from "react"
 import { geoMercator, geoPath } from "d3-geo"
 import { select } from "d3-selection"
-import "d3-transition" // registers selection.transition()
+import "d3-transition"
 import type { DistrictCollection, DistrictState } from "@/types"
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type DistrictProperties = { name: string }
+type DistrictFeature = GeoJSON.Feature<GeoJSON.Geometry, DistrictProperties>
+type DistrictFeatureCollection = GeoJSON.FeatureCollection<
+  GeoJSON.Geometry,
+  DistrictProperties
+>
 
 interface NepalMapProps {
   geoData: DistrictCollection
@@ -13,10 +22,24 @@ interface NepalMapProps {
   height?: number
 }
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const COLOR_IDLE = "#D3D1C7"
 const COLOR_CORRECT = "#639922"
 const COLOR_REVEALED = "#D85A30"
 const COLOR_STROKE = "#FFFFFF"
+
+const TRANSITION_MS = 200
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function statusColor(status: string): string {
+  if (status === "correct") return COLOR_CORRECT
+  if (status === "revealed") return COLOR_REVEALED
+  return COLOR_IDLE
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 function NepalMapComponent({
   geoData,
@@ -25,55 +48,53 @@ function NepalMapComponent({
   height = 480,
 }: NepalMapProps) {
   const svgRef = useRef<SVGSVGElement | null>(null)
-  const isInitializedRef = useRef(false)
 
-  // Projection + path generator only depend on the geometry and size.
+  // Recompute projection only when geometry or canvas size changes.
   const { pathFor, centroidFor } = useMemo(() => {
     const projection = geoMercator().fitSize(
       [width, height],
-      geoData as unknown as GeoJSON.FeatureCollection,
+      geoData as unknown as DistrictFeatureCollection,
     )
     const path = geoPath(projection)
     return {
-      pathFor: (feature: GeoJSON.Feature) => path(feature) ?? "",
-      centroidFor: (feature: GeoJSON.Feature) => path.centroid(feature),
+      pathFor: (f: DistrictFeature) => path(f) ?? "",
+      centroidFor: (f: DistrictFeature) => path.centroid(f),
     }
   }, [geoData, width, height])
 
-  // Initial render: draw all district paths + (hidden) labels once.
+  // ── Initial render ──────────────────────────────────────────────────────────
+  // Runs whenever geometry or projection changes. Wipes the SVG and redraws
+  // every district path + label from scratch, seeding colors from `districts`
+  // so the first paint is already correct even if statuses are non-idle.
   useEffect(() => {
-    if (isInitializedRef.current) return
-
-    console.log("Initializing map with", geoData.features.length, "features")
-    console.log("First feature properties:", geoData.features[0].properties)
-
     const svg = select(svgRef.current)
-    if (!svg.node()) {
-      console.error("SVG node not found")
-      return
-    }
+    if (!svg.node()) return
 
     svg.selectAll("*").remove()
 
+    const features = geoData.features as unknown as DistrictFeature[]
+
     const groups = svg
-      .selectAll("g.district")
-      .data(geoData.features)
+      .selectAll<SVGGElement, DistrictFeature>("g.district")
+      .data(features, (d) => d.properties.name) // key by name for stable joins
       .enter()
       .append("g")
-      .attr("class", "district")
+      .attr("class", (d) => `district district-${d.properties.name.replace(/\s+/g, "-")}`)
 
+    // Path
     groups
       .append("path")
-      .attr("d", (d) => pathFor(d as unknown as GeoJSON.Feature))
-      .attr("fill", COLOR_IDLE)
+      .attr("d", pathFor)
+      .attr("fill", (d) => statusColor(districts[d.properties.name] ?? "idle"))
       .attr("stroke", COLOR_STROKE)
       .attr("stroke-width", 0.6)
       .attr("stroke-linejoin", "round")
 
+    // Label (hidden until district is answered)
     groups
       .append("text")
-      .attr("x", (d) => centroidFor(d as unknown as GeoJSON.Feature)[0])
-      .attr("y", (d) => centroidFor(d as unknown as GeoJSON.Feature)[1])
+      .attr("x", (d) => centroidFor(d)[0])
+      .attr("y", (d) => centroidFor(d)[1])
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
       .attr("fill", "#FFFFFF")
@@ -83,42 +104,39 @@ function NepalMapComponent({
       .style("paint-order", "stroke")
       .style("stroke", "rgba(0,0,0,0.35)")
       .style("stroke-width", "1.4px")
-      .style("opacity", 0)
-      .text((d) => (d as { properties: { name: string } }).properties.name)
+      .style("opacity", (d) =>
+        (districts[d.properties.name] ?? "idle") === "idle" ? 0 : 1,
+      )
+      .text((d) => d.properties.name)
+  }, [geoData, pathFor, centroidFor]) // intentionally omits `districts` — see below
 
-    console.log("Map initialized with", svg.selectAll("g.district").size(), "groups")
-    isInitializedRef.current = true
-  }, [geoData, pathFor, centroidFor])
-
-  // Re-color + toggle labels whenever the district statuses change.
+  // ── Status updates ──────────────────────────────────────────────────────────
+  // Runs only when district statuses change. Skips full redraws; surgically
+  // transitions each group's fill and label opacity.
   useEffect(() => {
-    if (!isInitializedRef.current) return
-
     const svg = select(svgRef.current)
+    if (!svg.node()) return
+
+    // If the SVG hasn't been initialized yet (no groups present), bail out.
+    // This handles the rare case where this effect fires before the init effect.
+    if (svg.selectAll("g.district").size() === 0) return
 
     svg
-      .selectAll<SVGGElement, GeoJSON.Feature>("g.district")
+      .selectAll<SVGGElement, DistrictFeature>("g.district")
       .each(function (d) {
-        const name = (d as unknown as { properties: { name: string } }).properties.name
-        const status = districts[name] ?? "idle"
-        const fill =
-          status === "correct"
-            ? COLOR_CORRECT
-            : status === "revealed"
-              ? COLOR_REVEALED
-              : COLOR_IDLE
-
+        const status = districts[d.properties.name] ?? "idle"
         const group = select(this)
+
         group
           .select("path")
           .transition()
-          .duration(200)
-          .attr("fill", fill)
+          .duration(TRANSITION_MS)
+          .attr("fill", statusColor(status))
 
         group
           .select("text")
           .transition()
-          .duration(200)
+          .duration(TRANSITION_MS)
           .style("opacity", status === "idle" ? 0 : 1)
       })
   }, [districts])
