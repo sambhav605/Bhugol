@@ -22,7 +22,7 @@ Bhugol (भूगोल, meaning "geography" in Nepali) is a Sporcle-style map q
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
 - **UI Components:** shadcn/ui
-- **Map data:** Custom-generated SVG from [geoJSON-Nepal](https://github.com/mesaugat/geoJSON-Nepal)
+- **Map data:** Custom-generated SVG paths from [manishacharya60/nepal-geojson](https://github.com/manishacharya60/nepal-geojson) (2020 official boundaries)
 - **Deployment:** Cloudflare Pages
 
 ## Getting Started
@@ -79,7 +79,7 @@ Every push to `main` triggers an automatic rebuild and redeploy.
 
 ## Data Sources
 
-- District boundaries: [mesaugat/geoJSON-Nepal](https://github.com/mesaugat/geoJSON-Nepal)
+- District boundaries (2020 updated map, includes Limpiyadhura/Kalapani/Lipulekh in Darchula): [manishacharya60/nepal-geojson](https://github.com/manishacharya60/nepal-geojson)
 
 ## License
 
