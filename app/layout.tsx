@@ -13,22 +13,8 @@ export const metadata: Metadata = {
   title: 'Nepal Districts Quiz',
   description:
     'Can you name all 77 districts of Nepal in 15 minutes? Type to fill in the map.',
-  generator: 'v0.app',
   icons: {
-    icon: [
-      {
-        url: '/icon.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
+    icon: '/icon.png',
     apple: '/icon.png',
   },
 }
