@@ -10,7 +10,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Nepal Districts Quiz',
+  title: 'Bhugol | Nepal Districts Quiz',
   description:
     'Can you name all 77 districts of Nepal in 15 minutes? Type to fill in the map.',
   icons: {
