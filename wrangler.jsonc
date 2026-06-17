@@ -6,8 +6,5 @@
   "pages_build_output_dir": ".open-next/assets",
   "vars": {
     "MAINTENANCE_MODE": "false"
-  },
-  "assets": {
-    "binding": "ASSETS"
   }
 }
