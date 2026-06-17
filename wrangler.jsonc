@@ -3,5 +3,8 @@
   "name": "bhugol",
   "compatibility_date": "2025-06-17",
   "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": ".open-next/assets"
+  "pages_build_output_dir": ".open-next/assets",
+  "vars": {
+    "MAINTENANCE_MODE": "false"
+  }
 }

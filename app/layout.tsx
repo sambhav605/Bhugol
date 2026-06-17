@@ -24,6 +24,19 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  if (process.env.MAINTENANCE_MODE === 'true') {
+    return (
+      <html lang="en" className={`${geistSans.variable} ${geistMono.variable} bg-background`}>
+        <body className="font-sans antialiased">
+          <div className="flex flex-col items-center justify-center min-h-screen text-center px-4">
+            <h1 className="text-3xl font-bold mb-4">🛠️ Under Maintenance</h1>
+            <p className="text-muted-foreground">We're working on something. Check back soon!</p>
+          </div>
+        </body>
+      </html>
+    )
+  }
+
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} bg-background`}>
       <body className="font-sans antialiased">
