@@ -3,12 +3,5 @@
   "name": "bhugol",
   "compatibility_date": "2025-06-17",
   "compatibility_flags": ["nodejs_compat"],
-  "main": ".open-next/worker.js",
-  "assets": {
-    "directory": ".open-next/assets",
-    "binding": "ASSETS"
-  },
-  "vars": {
-    "MAINTENANCE_MODE": "false"
-  }
+  "pages_build_output_dir": ".open-next/assets"
 }
